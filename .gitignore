@@ -362,3 +362,4 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/template/backend/src/Ambev.DeveloperEvaluation.WebApi/appsettings.Development.json
