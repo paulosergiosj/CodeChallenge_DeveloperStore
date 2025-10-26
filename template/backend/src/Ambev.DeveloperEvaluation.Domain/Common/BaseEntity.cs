@@ -9,12 +9,12 @@ public class BaseEntity : IComparable<BaseEntity>
     /// <summary>
     /// Gets the date and time when the entity was created.
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; protected set; }
 
     /// <summary>
     /// Gets the date and time of the last update to the entity's information.
     /// </summary>
-    public DateTime? UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; protected set; }
 
     public Task<IEnumerable<ValidationErrorDetail>> ValidateAsync()
     {

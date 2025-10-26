@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Ambev.DeveloperEvaluation.Common.Security;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.UnitOfWork;
 using Ambev.DeveloperEvaluation.Domain.Specifications;
 using MediatR;
 
@@ -9,23 +9,23 @@ namespace Ambev.DeveloperEvaluation.Application.Auth.AuthenticateUser
 {
     public class AuthenticateUserHandler : IRequestHandler<AuthenticateUserCommand, AuthenticateUserResult>
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
         public AuthenticateUserHandler(
-            IUserRepository userRepository,
+            IUnitOfWork unitOfWork,
             IPasswordHasher passwordHasher,
             IJwtTokenGenerator jwtTokenGenerator)
         {
-            _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
         public async Task<AuthenticateUserResult> Handle(AuthenticateUserCommand request, CancellationToken cancellationToken)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+            var user = await _unitOfWork.Users.GetByEmailAsync(request.Email, cancellationToken);
             
             if (user == null || !_passwordHasher.VerifyPassword(request.Password, user.Password))
             {

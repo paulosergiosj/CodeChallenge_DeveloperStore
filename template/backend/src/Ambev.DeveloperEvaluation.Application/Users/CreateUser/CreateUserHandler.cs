@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
 using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.UnitOfWork;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Common.Security;
 
@@ -12,19 +12,19 @@ namespace Ambev.DeveloperEvaluation.Application.Users.CreateUser;
 /// </summary>
 public class CreateUserHandler : IRequestHandler<CreateUserCommand, CreateUserResult>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IPasswordHasher _passwordHasher;
 
     /// <summary>
     /// Initializes a new instance of CreateUserHandler
     /// </summary>
-    /// <param name="userRepository">The user repository</param>
+    /// <param name="unitOfWork">The unit of work instance</param>
     /// <param name="mapper">The AutoMapper instance</param>
-    /// <param name="validator">The validator for CreateUserCommand</param>
-    public CreateUserHandler(IUserRepository userRepository, IMapper mapper, IPasswordHasher passwordHasher)
+    /// <param name="passwordHasher">The password hasher service</param>
+    public CreateUserHandler(IUnitOfWork unitOfWork, IMapper mapper, IPasswordHasher passwordHasher)
     {
-        _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
         _passwordHasher = passwordHasher;
     }
@@ -43,15 +43,17 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, CreateUserRe
         if (!validationResult.IsValid)
             throw new ValidationException(validationResult.Errors);
 
-        var existingUser = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
+        var existingUser = await _unitOfWork.Users.GetByEmailAsync(command.Email, cancellationToken);
         if (existingUser != null)
             throw new InvalidOperationException($"User with email {command.Email} already exists");
 
         var user = _mapper.Map<User>(command);
         user.Password = _passwordHasher.HashPassword(command.Password);
 
-        var createdUser = await _userRepository.CreateAsync(user, cancellationToken);
-        var result = _mapper.Map<CreateUserResult>(createdUser);
+        await _unitOfWork.Users.CreateAsync(user, cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken);
+
+        var result = _mapper.Map<CreateUserResult>(user);
         return result;
     }
 }

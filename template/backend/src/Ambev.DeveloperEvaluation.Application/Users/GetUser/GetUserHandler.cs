@@ -1,7 +1,7 @@
 using AutoMapper;
 using MediatR;
 using FluentValidation;
-using Ambev.DeveloperEvaluation.Domain.Repositories;
+using Ambev.DeveloperEvaluation.Domain.UnitOfWork;
 
 namespace Ambev.DeveloperEvaluation.Application.Users.GetUser;
 
@@ -10,20 +10,19 @@ namespace Ambev.DeveloperEvaluation.Application.Users.GetUser;
 /// </summary>
 public class GetUserHandler : IRequestHandler<GetUserCommand, GetUserResult>
 {
-    private readonly IUserRepository _userRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
     /// <summary>
     /// Initializes a new instance of GetUserHandler
     /// </summary>
-    /// <param name="userRepository">The user repository</param>
+    /// <param name="unitOfWork">The unit of work instance</param>
     /// <param name="mapper">The AutoMapper instance</param>
-    /// <param name="validator">The validator for GetUserCommand</param>
     public GetUserHandler(
-        IUserRepository userRepository,
+        IUnitOfWork unitOfWork,
         IMapper mapper)
     {
-        _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
@@ -41,7 +40,7 @@ public class GetUserHandler : IRequestHandler<GetUserCommand, GetUserResult>
         if (!validationResult.IsValid)
             throw new ValidationException(validationResult.Errors);
 
-        var user = await _userRepository.GetByIdAsync(request.Id, cancellationToken);
+        var user = await _unitOfWork.Users.GetByIdAsync(request.Id, cancellationToken);
         if (user == null)
             throw new KeyNotFoundException($"User with ID {request.Id} not found");
 
