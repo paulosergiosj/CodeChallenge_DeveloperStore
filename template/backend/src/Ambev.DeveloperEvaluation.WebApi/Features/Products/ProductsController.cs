@@ -16,11 +16,13 @@ using Ambev.DeveloperEvaluation.WebApi.Features.Products.GetCategories;
 using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Ambev.DeveloperEvaluation.WebApi.Features.Products;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProductsController : BaseController
 {
     private readonly IMediator _mediator;

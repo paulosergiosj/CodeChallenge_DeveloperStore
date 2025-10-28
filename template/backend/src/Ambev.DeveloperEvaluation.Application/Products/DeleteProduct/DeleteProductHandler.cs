@@ -1,8 +1,6 @@
-using AutoMapper;
-using MediatR;
-using FluentValidation;
 using Ambev.DeveloperEvaluation.Domain.UnitOfWork;
-using Ambev.DeveloperEvaluation.Domain.Entities;
+using FluentValidation;
+using MediatR;
 
 namespace Ambev.DeveloperEvaluation.Application.Products.DeleteProduct;
 
@@ -37,18 +35,25 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, Delete
             throw new ValidationException(validationResult.Errors);
 
         var existingProduct = await _unitOfWork.Products.FirstOrDefaultAsync(
-            p => p.ProductNumber == command.ProductNumber, cancellationToken);
+            p => p.ProductNumber == command.ProductNumber, cancellationToken)
+            ?? throw new KeyNotFoundException($"Product with number {command.ProductNumber} not found");
 
-        if (existingProduct == null)
-            throw new KeyNotFoundException($"Product with number {command.ProductNumber} not found");
+        var isReferenced = await _unitOfWork.Products.IsReferencedInOrderItemsAsync(command.ProductNumber, cancellationToken);
+        if (isReferenced)
+            throw new InvalidOperationException($"Cannot delete product {command.ProductNumber} because it is referenced in existing orders");
 
         _unitOfWork.Products.Remove(existingProduct);
         await _unitOfWork.CommitAsync(cancellationToken);
 
-        return new DeleteProductResult 
-        { 
-            Message = "Product deleted successfully" 
+        return new DeleteProductResult
+        {
+            Message = "Product deleted successfully"
         };
     }
 }
+
+
+
+
+
 

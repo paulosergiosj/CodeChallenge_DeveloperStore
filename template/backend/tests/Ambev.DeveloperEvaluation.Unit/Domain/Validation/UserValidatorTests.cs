@@ -1,3 +1,4 @@
+using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Validation;
 using Ambev.DeveloperEvaluation.Unit.Domain.Entities.TestData;
@@ -60,7 +61,7 @@ public class UserValidatorTests
     {
         // Arrange
         var user = UserTestData.GenerateValidUser();
-        user.Username = username;
+        user.SetUserName(username);
 
         // Act
         var result = _validator.TestValidate(user);
@@ -80,7 +81,7 @@ public class UserValidatorTests
     {
         // Arrange
         var user = UserTestData.GenerateValidUser();
-        user.Username = UserTestData.GenerateLongUsername();
+        user.SetUserName(UserTestData.GenerateLongUsername());
 
         // Act
         var result = _validator.TestValidate(user);
@@ -103,7 +104,7 @@ public class UserValidatorTests
     {
         // Arrange
         var user = UserTestData.GenerateValidUser();
-        user.Email = UserTestData.GenerateInvalidEmail();
+        user.SetEmail(UserTestData.GenerateInvalidEmail());
 
         // Act
         var result = _validator.TestValidate(user);
@@ -128,7 +129,7 @@ public class UserValidatorTests
     {
         // Arrange
         var user = UserTestData.GenerateValidUser();
-        user.Password = UserTestData.GenerateInvalidPassword();
+        user.SetPassword(UserTestData.GenerateInvalidPassword());
 
         // Act
         var result = _validator.TestValidate(user);
@@ -151,7 +152,7 @@ public class UserValidatorTests
     {
         // Arrange
         var user = UserTestData.GenerateValidUser();
-        user.Phone = UserTestData.GenerateInvalidPhone();
+        user.SetPhone(UserTestData.GenerateInvalidPhone());
 
         // Act
         var result = _validator.TestValidate(user);
@@ -171,9 +172,12 @@ public class UserValidatorTests
     [Fact(DisplayName = "Unknown status should fail validation")]
     public void Given_UnknownStatus_When_Validated_Then_ShouldHaveError()
     {
-        // Arrange
+        // Arrange - Create a user with invalid status using reflection
         var user = UserTestData.GenerateValidUser();
-        user.Status = UserStatus.Unknown;
+        
+        // Use reflection to set invalid status since properties are private set
+        var statusProperty = typeof(User).GetProperty("Status");
+        statusProperty?.SetValue(user, UserStatus.Unknown); // Invalid status
 
         // Act
         var result = _validator.TestValidate(user);
@@ -193,9 +197,12 @@ public class UserValidatorTests
     [Fact(DisplayName = "None role should fail validation")]
     public void Given_NoneRole_When_Validated_Then_ShouldHaveError()
     {
-        // Arrange
+        // Arrange - Create a user with invalid role using reflection
         var user = UserTestData.GenerateValidUser();
-        user.Role = UserRole.None;
+        
+        // Use reflection to set invalid role since properties are private set
+        var roleProperty = typeof(User).GetProperty("Role");
+        roleProperty?.SetValue(user, UserRole.None);
 
         // Act
         var result = _validator.TestValidate(user);

@@ -34,11 +34,16 @@ public class DeleteUserHandler : IRequestHandler<DeleteUserCommand, DeleteUserRe
         if (!validationResult.IsValid)
             throw new ValidationException(validationResult.Errors);
 
-        var user = await _unitOfWork.Users.GetByIdAsync(request.Id, cancellationToken);
+        var user = await _unitOfWork.Users.GetByUserNumberAsync(request.UserNumber, cancellationToken);
         if (user == null)
-            throw new KeyNotFoundException($"User with ID {request.Id} not found");
+            throw new KeyNotFoundException($"User with number {request.UserNumber} not found");
 
-        await _unitOfWork.Users.DeleteAsync(user, cancellationToken);
+        // Check if user is referenced in any orders
+        var isReferenced = await _unitOfWork.Users.IsReferencedInOrdersAsync(user.Id, cancellationToken);
+        if (isReferenced)
+            throw new InvalidOperationException($"Cannot delete user {request.UserNumber} because they have existing orders");
+
+        await _unitOfWork.Users.DeleteAsync(user.Id, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
 
         return new DeleteUserResponse { Success = true };

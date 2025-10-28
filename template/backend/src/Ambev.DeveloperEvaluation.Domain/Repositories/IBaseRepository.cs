@@ -9,5 +9,8 @@ public interface IBaseRepository<TEntity> where TEntity : BaseEntity
     void Remove(TEntity entity);
     Task<TEntity?> GetByIdAsync(params object[] keys);
     Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TEntity?>> GetManyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+    Task UpdateAsync(TEntity entity);
     IQueryable<TEntity> Query();
+    Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
 }

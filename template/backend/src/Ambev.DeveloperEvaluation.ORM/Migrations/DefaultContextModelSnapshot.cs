@@ -53,16 +53,127 @@ namespace Ambev.DeveloperEvaluation.ORM.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("ea073788-95d3-4a66-983a-65cf357e5de3"),
-                            CreatedAt = new DateTime(2025, 10, 26, 3, 15, 2, 126, DateTimeKind.Utc).AddTicks(7601),
+                            Id = new Guid("1646c51a-2c3a-4f96-af62-0d2e9c8d4942"),
+                            CreatedAt = new DateTime(2025, 10, 28, 22, 1, 45, 398, DateTimeKind.Utc).AddTicks(3030),
                             Name = "branch A"
                         },
                         new
                         {
-                            Id = new Guid("05b4be53-13c6-4fd0-b623-c5513d947bfc"),
-                            CreatedAt = new DateTime(2025, 10, 26, 3, 15, 2, 126, DateTimeKind.Utc).AddTicks(7609),
+                            Id = new Guid("913904d7-4ea8-4695-b4da-e9d331693b56"),
+                            CreatedAt = new DateTime(2025, 10, 28, 22, 1, 45, 398, DateTimeKind.Utc).AddTicks(3032),
                             Name = "Branch B"
                         });
+                });
+
+            modelBuilder.Entity("Ambev.DeveloperEvaluation.Domain.Entities.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("BranchRefId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CartRefId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<Guid>("CustomerRefId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OrderNumber")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OrderNumber"));
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchRefId");
+
+                    b.HasIndex("CartRefId");
+
+                    b.HasIndex("CustomerRefId");
+
+                    b.HasIndex("OrderDate");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Orders", (string)null);
+                });
+
+            modelBuilder.Entity("Ambev.DeveloperEvaluation.Domain.Entities.OrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductRefId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ProductRefNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnUpdate()
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductRefId");
+
+                    b.HasIndex("ProductRefNumber");
+
+                    b.HasIndex("OrderId", "ProductRefNumber")
+                        .IsUnique();
+
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Ambev.DeveloperEvaluation.Domain.Entities.Product", b =>
@@ -156,6 +267,12 @@ namespace Ambev.DeveloperEvaluation.ORM.Migrations
                         .ValueGeneratedOnUpdate()
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("UserNumber")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserNumber"));
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -164,6 +281,15 @@ namespace Ambev.DeveloperEvaluation.ORM.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("Ambev.DeveloperEvaluation.Domain.Entities.OrderItem", b =>
+                {
+                    b.HasOne("Ambev.DeveloperEvaluation.Domain.Entities.Order", null)
+                        .WithMany("Items")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Ambev.DeveloperEvaluation.Domain.Entities.Product", b =>
@@ -189,6 +315,11 @@ namespace Ambev.DeveloperEvaluation.ORM.Migrations
 
                     b.Navigation("Rating")
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Ambev.DeveloperEvaluation.Domain.Entities.Order", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

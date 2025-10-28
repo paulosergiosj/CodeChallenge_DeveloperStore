@@ -59,3 +59,8 @@ public class UpdateProductCommand : IRequest<UpdateProductResult>
     public int Count { get; set; }
 }
 
+
+
+
+
+

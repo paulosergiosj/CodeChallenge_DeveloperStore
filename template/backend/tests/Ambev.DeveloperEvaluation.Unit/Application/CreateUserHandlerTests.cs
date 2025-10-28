@@ -3,7 +3,8 @@ using Ambev.DeveloperEvaluation.Common.Security;
 using Ambev.DeveloperEvaluation.Domain.Entities;
 using Ambev.DeveloperEvaluation.Domain.Repositories;
 using Ambev.DeveloperEvaluation.Domain.UnitOfWork;
-using Ambev.DeveloperEvaluation.Unit.Domain;
+using Ambev.DeveloperEvaluation.Domain.Enums;
+using Ambev.DeveloperEvaluation.Unit.Application.TestData;
 using AutoMapper;
 using FluentAssertions;
 using NSubstitute;
@@ -32,6 +33,7 @@ public class CreateUserHandlerTests
         _mapper = Substitute.For<IMapper>();
         _passwordHasher = Substitute.For<IPasswordHasher>();
         _unitOfWork = Substitute.For<IUnitOfWork>();
+        _unitOfWork.Users.Returns(_userRepository);
         _handler = new CreateUserHandler(_unitOfWork, _mapper, _passwordHasher);
     }
 
@@ -43,29 +45,26 @@ public class CreateUserHandlerTests
     {
         // Given
         var command = CreateUserHandlerTestData.GenerateValidCommand();
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = command.Username,
-            Password = command.Password,
-            Email = command.Email,
-            Phone = command.Phone,
-            Status = command.Status,
-            Role = command.Role
-        };
+        var hashedPassword = "HashedPass123!";
+        var user = User.Create(
+            command.Username,
+            command.Email,
+            command.Phone,
+            hashedPassword,
+            command.Role
+        );
 
         var result = new CreateUserResult
         {
-            Id = user.Id,
+            Id = user.Id
         };
 
-
-        _mapper.Map<User>(command).Returns(user);
-        _mapper.Map<CreateUserResult>(user).Returns(result);
-
+        _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
+            .Returns((User?)null);
+        _passwordHasher.HashPassword(command.Password).Returns(hashedPassword);
         _userRepository.CreateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>())
             .Returns(user);
-        _passwordHasher.HashPassword(Arg.Any<string>()).Returns("hashedPassword");
+        _mapper.Map<CreateUserResult>(Arg.Any<User>()).Returns(result);
 
         // When
         var createUserResult = await _handler.Handle(command, CancellationToken.None);
@@ -73,7 +72,12 @@ public class CreateUserHandlerTests
         // Then
         createUserResult.Should().NotBeNull();
         createUserResult.Id.Should().Be(user.Id);
+        
+        await _userRepository.Received(1).GetByEmailAsync(command.Email, Arg.Any<CancellationToken>());
+        _passwordHasher.Received(1).HashPassword(command.Password);
         await _userRepository.Received(1).CreateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>());
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
+        _mapper.Received(1).Map<CreateUserResult>(Arg.Any<User>());
     }
 
     /// <summary>
@@ -93,6 +97,33 @@ public class CreateUserHandlerTests
     }
 
     /// <summary>
+    /// Tests that creating a user with existing email throws an exception.
+    /// </summary>
+    [Fact(DisplayName = "Given existing email When creating user Then throws invalid operation exception")]
+    public async Task Handle_ExistingEmail_ThrowsInvalidOperationException()
+    {
+        // Given
+        var command = CreateUserHandlerTestData.GenerateValidCommand();
+        var existingUser = User.Create(
+            "existinguser",
+            command.Email,
+            "+5511999999999",
+            "HashedPass123!",
+            UserRole.Customer
+        );
+
+        _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
+            .Returns(existingUser);
+
+        // When
+        var act = () => _handler.Handle(command, CancellationToken.None);
+
+        // Then
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage($"User with email {command.Email} already exists");
+    }
+
+    /// <summary>
     /// Tests that the password is hashed before saving the user.
     /// </summary>
     [Fact(DisplayName = "Given user creation request When handling Then password is hashed")]
@@ -102,21 +133,20 @@ public class CreateUserHandlerTests
         var command = CreateUserHandlerTestData.GenerateValidCommand();
         var originalPassword = command.Password;
         const string hashedPassword = "h@shedPassw0rd";
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = command.Username,
-            Password = command.Password,
-            Email = command.Email,
-            Phone = command.Phone,
-            Status = command.Status,
-            Role = command.Role
-        };
+        var user = User.Create(
+            command.Username,
+            command.Email,
+            command.Phone,
+            hashedPassword,
+            command.Role
+        );
 
-        _mapper.Map<User>(command).Returns(user);
+        _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
+            .Returns((User?)null);
+        _passwordHasher.HashPassword(originalPassword).Returns(hashedPassword);
         _userRepository.CreateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>())
             .Returns(user);
-        _passwordHasher.HashPassword(originalPassword).Returns(hashedPassword);
+        _mapper.Map<CreateUserResult>(user).Returns(new CreateUserResult { Id = user.Id });
 
         // When
         await _handler.Handle(command, CancellationToken.None);
@@ -129,38 +159,32 @@ public class CreateUserHandlerTests
     }
 
     /// <summary>
-    /// Tests that the mapper is called with the correct command.
+    /// Tests that the unit of work is committed after user creation.
     /// </summary>
-    [Fact(DisplayName = "Given valid command When handling Then maps command to user entity")]
-    public async Task Handle_ValidRequest_MapsCommandToUser()
+    [Fact(DisplayName = "Given valid command When handling Then commits unit of work")]
+    public async Task Handle_ValidRequest_CommitsUnitOfWork()
     {
         // Given
         var command = CreateUserHandlerTestData.GenerateValidCommand();
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = command.Username,
-            Password = command.Password,
-            Email = command.Email,
-            Phone = command.Phone,
-            Status = command.Status,
-            Role = command.Role
-        };
+        var user = User.Create(
+            command.Username,
+            command.Email,
+            command.Phone,
+            "HashedPass123!",
+            command.Role
+        );
 
-        _mapper.Map<User>(command).Returns(user);
+        _userRepository.GetByEmailAsync(command.Email, Arg.Any<CancellationToken>())
+            .Returns((User?)null);
+        _passwordHasher.HashPassword(Arg.Any<string>()).Returns("HashedPass123!");
         _userRepository.CreateAsync(Arg.Any<User>(), Arg.Any<CancellationToken>())
             .Returns(user);
-        _passwordHasher.HashPassword(Arg.Any<string>()).Returns("hashedPassword");
+        _mapper.Map<CreateUserResult>(user).Returns(new CreateUserResult { Id = user.Id });
 
         // When
         await _handler.Handle(command, CancellationToken.None);
 
         // Then
-        _mapper.Received(1).Map<User>(Arg.Is<CreateUserCommand>(c =>
-            c.Username == command.Username &&
-            c.Email == command.Email &&
-            c.Phone == command.Phone &&
-            c.Status == command.Status &&
-            c.Role == command.Role));
+        await _unitOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
 }

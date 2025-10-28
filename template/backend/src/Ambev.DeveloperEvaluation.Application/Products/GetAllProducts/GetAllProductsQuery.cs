@@ -39,3 +39,8 @@ public class GetAllProductsQuery : IRequest<PaginatedList<GetAllProductsResult>>
     public decimal? MaxPrice { get; set; }
 }
 
+
+
+
+
+

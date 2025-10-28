@@ -3,6 +3,7 @@ using Ambev.DeveloperEvaluation.Common.Validation;
 using Ambev.DeveloperEvaluation.Domain.Common;
 using Ambev.DeveloperEvaluation.Domain.Enums;
 using Ambev.DeveloperEvaluation.Domain.Validation;
+using FluentValidation;
 
 namespace Ambev.DeveloperEvaluation.Domain.Entities;
 
@@ -17,38 +18,40 @@ public class User : BaseEntity, IUser
     /// Gets the user's full name.
     /// Must not be null or empty and should contain both first and last names.
     /// </summary>
-    public string Username { get; set; } = string.Empty;
+    public string Username { get; private set; } = string.Empty;
+
+    public int UserNumber { get; protected set; }
 
     /// <summary>
     /// Gets the user's email address.
     /// Must be a valid email format and is used as a unique identifier for authentication.
     /// </summary>
-    public string Email { get; set; } = string.Empty;
+    public string Email { get; private set; } = string.Empty;
 
     /// <summary>
     /// Gets the user's phone number.
     /// Must be a valid phone number format following the pattern (XX) XXXXX-XXXX.
     /// </summary>
-    public string Phone { get; set; } = string.Empty ;
+    public string Phone { get; private set; } = string.Empty;
 
     /// <summary>
     /// Gets the hashed password for authentication.
     /// Password must meet security requirements: minimum 8 characters, at least one uppercase letter,
     /// one lowercase letter, one number, and one special character.
     /// </summary>
-    public string Password { get; set; } = string.Empty;
+    public string Password { get; private set; } = string.Empty;
 
     /// <summary>
     /// Gets the user's role in the system.
     /// Determines the user's permissions and access levels.
     /// </summary>
-    public UserRole Role { get;     set; }
+    public UserRole Role { get; private set; }
 
     /// <summary>
     /// Gets the user's current status.
     /// Indicates whether the user is active, inactive, or blocked in the system.
     /// </summary>
-    public UserStatus Status { get; set; }
+    public UserStatus Status { get; private set; }
 
     /// <summary>
     /// Gets the unique identifier of the user.
@@ -74,6 +77,35 @@ public class User : BaseEntity, IUser
     public User()
     {
         CreatedAt = DateTime.UtcNow;
+    }
+
+    public static User Create(
+    string username,
+    string email,
+    string phone,
+    string hashedPassword,
+    UserRole role)
+    {
+        var user = new User
+        {
+            Username = username,
+            Email = email,
+            Phone = phone,
+            Password = hashedPassword,
+            Role = role,
+            Status = UserStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var validationResult = user.Validate();
+
+        if (!validationResult.IsValid)
+        {
+            var errors = string.Join("; ", validationResult.Errors.Select(e => e.Detail));
+            throw new ValidationException(errors);
+        }
+
+        return user;
     }
 
     /// <summary>
@@ -104,9 +136,33 @@ public class User : BaseEntity, IUser
         };
     }
 
+    public void SetUserName(string username)
+    {
+        Username = username;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetPhone(string phone)
+    {
+        Phone = phone;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetPassword(string password)
+    {
+        Password = password;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void SetEmail(string email)
+    {
+        Email = email;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
     /// <summary>
     /// Activates the user account.
-    /// Changes the user's status to Active.
+    /// Sets the user's status to Active.
     /// </summary>
     public void Activate()
     {
@@ -116,7 +172,7 @@ public class User : BaseEntity, IUser
 
     /// <summary>
     /// Deactivates the user account.
-    /// Changes the user's status to Inactive.
+    /// Sets the user's status to Inactive.
     /// </summary>
     public void Deactivate()
     {
@@ -126,7 +182,7 @@ public class User : BaseEntity, IUser
 
     /// <summary>
     /// Blocks the user account.
-    /// Changes the user's status to Blocked.
+    /// Sets the user's status to Blocked.
     /// </summary>
     public void Suspend()
     {

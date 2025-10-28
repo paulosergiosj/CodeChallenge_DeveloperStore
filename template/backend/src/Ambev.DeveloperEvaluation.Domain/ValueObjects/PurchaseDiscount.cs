@@ -1,10 +1,10 @@
 ﻿namespace Ambev.DeveloperEvaluation.Domain.ValueObjects;
 
-public class ProductDiscount
+public class PurchaseDiscount
 {
     public decimal Value { get; private set; } = 0;
 
-    public ProductDiscount(int quantity, decimal unitPrice)
+    public PurchaseDiscount(int quantity, decimal unitPrice)
     {
         if (quantity >= 4 && quantity < 10)
         {

@@ -41,3 +41,8 @@ public class GetAllProductsRequest
     public decimal? MaxPrice { get; set; }
 }
 
+
+
+
+
+

@@ -8,16 +8,16 @@ namespace Ambev.DeveloperEvaluation.Application.Users.DeleteUser;
 public record DeleteUserCommand : IRequest<DeleteUserResponse>
 {
     /// <summary>
-    /// The unique identifier of the user to delete
+    /// The user number of the user to delete
     /// </summary>
-    public Guid Id { get; }
+    public int UserNumber { get; }
 
     /// <summary>
     /// Initializes a new instance of DeleteUserCommand
     /// </summary>
-    /// <param name="id">The ID of the user to delete</param>
-    public DeleteUserCommand(Guid id)
+    /// <param name="userNumber">The user number of the user to delete</param>
+    public DeleteUserCommand(int userNumber)
     {
-        Id = id;
+        UserNumber = userNumber;
     }
 }

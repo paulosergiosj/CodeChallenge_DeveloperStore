@@ -12,8 +12,8 @@ public class DeleteUserValidator : AbstractValidator<DeleteUserCommand>
     /// </summary>
     public DeleteUserValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty()
-            .WithMessage("User ID is required");
+        RuleFor(x => x.UserNumber)
+            .GreaterThan(0)
+            .WithMessage("User number must be greater than 0");
     }
 }

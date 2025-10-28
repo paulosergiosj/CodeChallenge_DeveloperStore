@@ -32,7 +32,6 @@ public class BaseController : ControllerBase
                 Data = pagedList,
                 CurrentPage = pagedList.CurrentPage,
                 TotalPages = pagedList.TotalPages,
-                TotalCount = pagedList.TotalCount,
-                Success = true
+                TotalCount = pagedList.TotalCount
             });
 }

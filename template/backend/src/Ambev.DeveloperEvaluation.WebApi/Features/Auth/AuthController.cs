@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using AutoMapper;
 using Ambev.DeveloperEvaluation.WebApi.Common;
 using Ambev.DeveloperEvaluation.WebApi.Features.Auth.AuthenticateUserFeature;
@@ -12,6 +13,7 @@ namespace Ambev.DeveloperEvaluation.WebApi.Features.Auth;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[AllowAnonymous]
 public class AuthController : BaseController
 {
     private readonly IMediator _mediator;

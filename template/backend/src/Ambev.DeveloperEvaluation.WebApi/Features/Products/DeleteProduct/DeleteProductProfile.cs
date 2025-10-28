@@ -17,3 +17,8 @@ public class DeleteProductProfile : Profile
     }
 }
 
+
+
+
+
+

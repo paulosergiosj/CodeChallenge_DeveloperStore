@@ -43,3 +43,8 @@ public class GetAllProductsResponse
     public ProductRating Rating { get; set; } = new();
 }
 
+
+
+
+
+

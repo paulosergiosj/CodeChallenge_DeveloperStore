@@ -13,3 +13,8 @@ public class DeleteProductCommand : IRequest<DeleteProductResult>
     public int ProductNumber { get; set; }
 }
 
+
+
+
+
+

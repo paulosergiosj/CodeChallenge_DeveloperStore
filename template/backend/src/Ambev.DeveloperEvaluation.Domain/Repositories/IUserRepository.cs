@@ -32,10 +32,26 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves a user by their user number
+    /// </summary>
+    /// <param name="userNumber">The user number to search for</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The user if found, null otherwise</returns>
+    Task<User?> GetByUserNumberAsync(int userNumber, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Deletes a user from the repository
     /// </summary>
     /// <param name="id">The unique identifier of the user to delete</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if the user was deleted, false if not found</returns>
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Checks if a user is referenced in any orders
+    /// </summary>
+    /// <param name="userId">The user ID to check</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if the user is referenced in orders, false otherwise</returns>
+    Task<bool> IsReferencedInOrdersAsync(Guid userId, CancellationToken cancellationToken = default);
 }

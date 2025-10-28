@@ -38,3 +38,8 @@ public class UpdateProductRequest
     public ProductRating Rating { get; set; } = new();
 }
 
+
+
+
+
+

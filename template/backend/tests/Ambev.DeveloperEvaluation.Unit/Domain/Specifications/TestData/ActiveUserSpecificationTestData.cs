@@ -12,35 +12,38 @@ namespace Ambev.DeveloperEvaluation.Unit.Domain.Specifications.TestData;
 public static class ActiveUserSpecificationTestData
 {
     /// <summary>
-    /// Configures the Faker to generate valid User entities.
-    /// The generated users will have valid:
-    /// - Email (valid format)
-    /// - Password (meeting complexity requirements)
-    /// - FirstName
-    /// - LastName
-    /// - Phone (Brazilian format)
-    /// - Role (User)
-    /// Status is not set here as it's the main test parameter
-    /// </summary>
-    private static readonly Faker<User> userFaker = new Faker<User>()
-        .CustomInstantiator(f => new User {
-            Email = f.Internet.Email(),
-            Password = $"Test@{f.Random.Number(100, 999)}",
-            Username = f.Name.FirstName(),
-            Status = f.PickRandom<UserStatus>(),
-            Phone = $"+55{f.Random.Number(11, 99)}{f.Random.Number(100000000, 999999999)}",
-            Role = f.PickRandom<UserRole> ()
-        });
-
-    /// <summary>
     /// Generates a valid User entity with the specified status.
+    /// Since User is a Rich Domain Model, we use the User.Create() factory method
+    /// and then modify the status using the appropriate domain methods.
     /// </summary>
     /// <param name="status">The UserStatus to set for the generated user.</param>
     /// <returns>A valid User entity with randomly generated data and specified status.</returns>
     public static User GenerateUser(UserStatus status)
     {
-        var user = userFaker.Generate();
-        user.Status = status;
+        var faker = new Faker();
+        
+        var user = User.Create(
+            username: faker.Internet.UserName(),
+            email: faker.Internet.Email(),
+            phone: $"+55{faker.Random.Number(11, 99)}{faker.Random.Number(100000000, 999999999)}",
+            hashedPassword: $"Test@{faker.Random.Number(100, 999)}",
+            role: faker.PickRandom(UserRole.Customer, UserRole.Admin)
+        );
+
+        // Set the desired status using domain methods
+        switch (status)
+        {
+            case UserStatus.Active:
+                user.Activate();
+                break;
+            case UserStatus.Suspended:
+                user.Suspend();
+                break;
+            case UserStatus.Inactive:
+                user.Deactivate();
+                break;
+        }
+
         return user;
     }
 }
